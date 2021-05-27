@@ -2,6 +2,8 @@
 const express = require('express')
 const app = express()
 var path = require('path');
+const fetch = require('node-fetch');
+const { text } = require('express');
 const port = 3001
 //const cors = require('cors');
 //app.use(cors);
@@ -1023,11 +1025,17 @@ app.get('/search/:query?', function(req, res){
     res.json({ message: fetchBook(title) })
       res.send(fetchBook(title))
   });
+  //console.log("Fuk");
+  var data;
+const setData = (data2) =>
+{
+  data = data2;
+}
 const fetchBook =(title) =>
 {
-    for(var i=0; i<books.length;i++)
-    {
-        if(books[i].title===title)
-            return books[i].author;
-    }
+  fetch(`https://www.googleapis.com/books/v1/volumes?q=${title}+&key=AIzaSyDnGtltPSuB-qkCnK3T4KXf3ucIyYSBjQM`)
+  .then(res => res.json())
+  .then(result => setData(result.items[0].volumeInfo.authors[0]))
+ 
+return data;
 }
