@@ -13,25 +13,49 @@ admin.initializeApp({
 const db = admin.firestore();
 const port = 3001;
 
-findById = (id, result) => {
-  sql.query(`SELECT title FROM book HAVING title = "${id}" `, (err, res) => {
+findById = (id) => {
+  sql.query(`SELECT Title FROM book HAVING title = "${id}" `, (err, res) => {
     if (err) {
       console.log("error: ", err);
-      //result(err, null);
-      return;
+      return err;
     }
 
     if (res.length) {
       console.log("found book: ", res[0]);
-      //result(null, res[0]);
-      return;
+      return res[0];
     }
-
-    // not found Tutorial with the id
-    //result({ kind: "not_found" }, null);
   });
 };
+findAuthorFromID = (id) => {
+  sql.query(
+    `SELECT fname,lname FROM authors HAVING id= "${id}" `,
+    (err, res) => {
+      if (err) {
+        console.log("error: ", err);
+        return;
+      }
 
+      if (res.length) {
+        console.log("found book: ", res[0]);
+        return res[0];
+      }
+    }
+  );
+};
+insertNewBook = (Title, Price, published, rating, ISBN, AuthID, PubID) => {
+  sql.query(
+    `INSERT INTO book (Title, Price, PublishedDate, Rating, ISBN, AuthID, PubID) 
+    VALUES("${Title}", ${Price}, ${published}, ${rating}, ${ISBN}, ${AuthID}, ${PubID})`,
+    (err, res) => {
+      if (err) throw err;
+    }
+  );
+};
+deleteBook = (title) => {
+  sql.query(`DELETE FROM book WHERE title = "${title}"`, (err, res) => {
+    if (err) throw err;
+  });
+};
 app.get("/", (req, res) => {
   res.json({ message: "Hello from server!" });
 });
@@ -42,7 +66,7 @@ app.listen(port, () => {
 
 app.get("/search/:query", function (req, res) {
   const title = req.params.query;
-  findById(title);
+  book = findById(title);
   fetch(
     `https://www.googleapis.com/books/v1/volumes?q=${title}+&key=AIzaSyB6vrb-b0HwJDZTHPyHd_skMT41qBuVI34`
   )
@@ -62,10 +86,20 @@ app.get("/books", async (req, res) => {
   });
   res.send(books);
 });
+app.get("/sqlBooks", async (req, res) => {
+  const books = [];
+  sql.query(`SELECT Title FROM book`, (err, books) => {
+    if (err) {
+      console.log("error: ", err);
+    }
 
+    res.send(books);
+  });
+});
 app.post("/books/add/:query", async (req, res) => {
   var title = req.params.query;
   var data;
+  insertNewBook(title, 20, 11 / 1 / 1999, 3, 12315540, 1, 1);
   const setData = (val) => {
     data = val;
   };
@@ -84,7 +118,7 @@ app.delete("/books/delete/:query", async (req, res) => {
   var title = req.params.query;
   const books = [];
   const snapshot = await db.collection("books").get();
-
+  deleteBook(title);
   snapshot.forEach((doc) => {
     let docU = { ...doc.data(), id: doc.id };
     books.push(docU);

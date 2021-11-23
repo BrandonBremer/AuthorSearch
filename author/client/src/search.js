@@ -6,17 +6,17 @@ function Search() {
   const [data, setData] = useState("");
   const [userInput, setUserInput] = useState("");
 
-  //console.log(data);
-
   const handleChange = (e) => {
     setUserInput(e.currentTarget.value);
   };
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log(userInput);
+    //console.log(userInput);
+    //findByID(userInput);
     fetch(`/search/${userInput}`)
       .then((res) => res.json())
       .then((data) => setData(data.message));
+    console.log(data);
   };
 
   const handleSubmit2 = (e) => {
