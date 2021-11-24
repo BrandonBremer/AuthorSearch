@@ -5,7 +5,8 @@ import Routes from "./routes.js";
 function Library() {
   const [books, setBooks] = useState([]);
   const [userInput, setUserInput] = React.useState("");
-
+  const [readMore, setReadMore] = useState(false);
+  const [updateTarget, setUpdate] = React.useState("");
   // const listItems = books.map((book) => (
   //   <li>{book.items[0].volumeInfo.title}</li>
   // ));
@@ -17,6 +18,11 @@ function Library() {
   const handleChange = (e) => {
     setUserInput(e.currentTarget.value);
   };
+  const handleChangeUpdate = (e) => {
+    setUpdate(e.currentTarget.value);
+  };
+
+  const linkName = readMore ? "Read Less << " : "Read More >> ";
   const handleSubmit = (e) => {
     var id = userInput;
     // e.preventDefault();
@@ -47,12 +53,50 @@ function Library() {
       .then((data) => setBooks(data));
     console.log(books[0]);
   };
-  // {b.items[0].volumeInfo.title} By {b.items[0].volumeInfo.authors[0]}
+  const handleSubmitUpdate = (book) => {
+    var rate = updateTarget;
+
+    fetch(`/books/update/${rate}/${book}`)
+      .then((res) => res.json())
+      .then((data) => console.log(data));
+    setUpdate("");
+  };
+
   return (
     <div>
       <p>
         {books.map((b) => (
-          <p>{b.Title}</p>
+          <p>
+            <a
+              className="read-more-link"
+              onClick={() => {
+                setReadMore(!readMore);
+              }}
+            >
+              {b.Title}
+            </a>
+            {readMore && <br></br>}
+            {readMore && " Rating" + b.Rating}
+            {readMore && <br></br>}
+            {readMore && (
+              <Input
+                value={updateTarget}
+                color="secondary"
+                type="text"
+                onChange={handleChangeUpdate}
+                placeholder="Rate this!"
+              />
+            )}
+            {readMore && <br></br>}
+            {readMore && (
+              <Button
+                variant="contained"
+                onClick={() => handleSubmitUpdate(b.Title)}
+              >
+                Update Rating
+              </Button>
+            )}
+          </p>
         ))}
 
         <Input

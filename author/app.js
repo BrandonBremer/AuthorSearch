@@ -88,7 +88,7 @@ app.get("/books", async (req, res) => {
 });
 app.get("/sqlBooks", async (req, res) => {
   const books = [];
-  sql.query(`SELECT Title FROM book`, (err, books) => {
+  sql.query(`SELECT Title, Rating FROM book`, (err, books) => {
     if (err) {
       console.log("error: ", err);
     }
@@ -100,33 +100,47 @@ app.post("/books/add/:query", async (req, res) => {
   var title = req.params.query;
   var data;
   insertNewBook(title, 20, 11 / 1 / 1999, 3, 12315540, 1, 1);
-  const setData = (val) => {
-    data = val;
-  };
-  fetch(
-    `https://www.googleapis.com/books/v1/volumes?q=${title}+&key=AIzaSyB6vrb-b0HwJDZTHPyHd_skMT41qBuVI34`
-  )
-    .then((res) => res.json())
-    .then((result) => {
-      const snapshot = db.collection("books").add(result);
-      res.send(snapshot);
-    });
+  //const setData = (val) => {
+  // data = val;
+  //};
+  //fetch(
+  // `https://www.googleapis.com/books/v1/volumes?q=${title}+&key=AIzaSyB6vrb-b0HwJDZTHPyHd_skMT41qBuVI34`
+  //)
+  //.then((res) => res.json())
+  //.then((result) => {
+  // const snapshot = db.collection("books").add(result);
+  //res.send(snapshot);
+  //});
 });
 
 app.delete("/books/delete/:query", async (req, res) => {
   var docToDeleteId = "";
   var title = req.params.query;
   const books = [];
-  const snapshot = await db.collection("books").get();
+  // const snapshot = await db.collection("books").get();
   deleteBook(title);
-  snapshot.forEach((doc) => {
-    let docU = { ...doc.data(), id: doc.id };
-    books.push(docU);
-  });
-  for (var i = 0; i < books.length; i++) {
-    if (books[i].items[0].volumeInfo.title === title)
-      docToDeleteId = books[i].id;
-  }
-  const bookies = await db.collection("books").doc(docToDeleteId).delete();
+  //snapshot.forEach((doc) => {
+  //  let docU = { ...doc.data(), id: doc.id };
+  //  books.push(docU);
+  // });
+  //for (var i = 0; i < books.length; i++) {
+  //  if (books[i].items[0].volumeInfo.title === title)
+  //   docToDeleteId = books[i].id;
+  // }
+  // const bookies = await db.collection("books").doc(docToDeleteId).delete();
   res.send("DELETE Request Called");
+});
+app.get("/books/update/:query/:query2", async (req, res) => {
+  var rate = req.params.query;
+  var title = req.params.query2;
+  sql.query(
+    `UPDATE book SET rating = ${rate} WHERE title = "${title}"`,
+    (err, books) => {
+      if (err) {
+        console.log("error: ", err);
+      }
+
+      res.send(books);
+    }
+  );
 });
