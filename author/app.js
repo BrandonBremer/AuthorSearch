@@ -4,7 +4,7 @@ var path = require("path");
 const fetch = require("node-fetch");
 var admin = require("firebase-admin");
 var serviceAccount = require("./accountKey2.json");
-const mysql = require("mysql");
+//const mysql = require("mysql");
 const dbConfig = require("./db.config.js");
 const sql = require("./db.js");
 admin.initializeApp({
@@ -42,18 +42,35 @@ findAuthorFromID = (id) => {
     }
   );
 };
-insertNewBook = (Title, Price, published, rating, ISBN, AuthID, PubID) => {
+insertNewBook = (
+  Title,
+  Price,
+  published,
+  rating,
+  ISBN,
+  AuthID,
+  PubID,
+  user
+) => {
   sql.query(
-    `INSERT INTO book (Title, Price, PublishedDate, Rating, ISBN, AuthID, PubID) 
-    VALUES("${Title}", ${Price}, ${published}, ${rating}, ${ISBN}, ${AuthID}, ${PubID})`,
+    `INSERT INTO book (Title, Price, PublishedDate, Rating, ISBN, AuthID, PubID, UID) 
+    VALUES("${Title}", ${Price}, ${published}, ${rating}, ${ISBN}, ${AuthID}, ${PubID}, ${user})`,
     (err, res) => {
       if (err) throw err;
     }
   );
 };
 deleteBook = (title) => {
-  sql.query(`DELETE FROM book WHERE title = "${title}"`, (err, res) => {
-    if (err) throw err;
+  sql.query(`SELECT UID FROM users WHERE loggedIn = 1`, (err, books) => {
+    if (err) {
+      console.log("error: ", err);
+    }
+    sql.query(
+      `DELETE FROM book WHERE title = "${title}" AND UID =${books[0].UID}`,
+      (err, res) => {
+        if (err) throw err;
+      }
+    );
   });
 };
 app.get("/", (req, res) => {
@@ -86,48 +103,45 @@ app.get("/books", async (req, res) => {
   });
   res.send(books);
 });
-app.get("/sqlBooks", async (req, res) => {
+app.get("/sqlBooks/", async (req, res) => {
   const books = [];
-  sql.query(`SELECT Title, Rating FROM book`, (err, books) => {
-    if (err) {
-      console.log("error: ", err);
-    }
+  var UID = req.params.query;
+  sql.query(
+    `SELECT Title, Rating FROM book WHERE UID IN (SELECT UID FROM users WHERE loggedIn = 1)`,
+    (err, books) => {
+      if (err) {
+        console.log("error: ", err);
+      }
 
-    res.send(books);
-  });
+      res.send(books);
+    }
+  );
 });
 app.post("/books/add/:query", async (req, res) => {
   var title = req.params.query;
   var data;
-  insertNewBook(title, 20, 11 / 1 / 1999, 3, 12315540, 1, 1);
-  //const setData = (val) => {
-  // data = val;
-  //};
-  //fetch(
-  // `https://www.googleapis.com/books/v1/volumes?q=${title}+&key=AIzaSyB6vrb-b0HwJDZTHPyHd_skMT41qBuVI34`
-  //)
-  //.then((res) => res.json())
-  //.then((result) => {
-  // const snapshot = db.collection("books").add(result);
-  //res.send(snapshot);
-  //});
+  sql.query(`SELECT UID FROM users WHERE loggedIn = 1`, (err, books) => {
+    if (err) {
+      console.log("error: ", err);
+    }
+    insertNewBook(
+      title,
+      20,
+      11 / 1 / 1999,
+      3,
+      Math.random() * 10000,
+      1,
+      1,
+      books[0].UID
+    );
+  });
 });
 
 app.delete("/books/delete/:query", async (req, res) => {
   var docToDeleteId = "";
   var title = req.params.query;
   const books = [];
-  // const snapshot = await db.collection("books").get();
   deleteBook(title);
-  //snapshot.forEach((doc) => {
-  //  let docU = { ...doc.data(), id: doc.id };
-  //  books.push(docU);
-  // });
-  //for (var i = 0; i < books.length; i++) {
-  //  if (books[i].items[0].volumeInfo.title === title)
-  //   docToDeleteId = books[i].id;
-  // }
-  // const bookies = await db.collection("books").doc(docToDeleteId).delete();
   res.send("DELETE Request Called");
 });
 app.get("/books/update/:query/:query2", async (req, res) => {
@@ -141,6 +155,89 @@ app.get("/books/update/:query/:query2", async (req, res) => {
       }
 
       res.send(books);
+    }
+  );
+});
+app.get("/sort", async (req, res) => {
+  const books = [];
+  sql.query(
+    `SELECT Title, Rating FROM book WHERE UID IN (SELECT UID FROM users WHERE loggedIn = 1) ORDER BY rating ASC`,
+    (err, books) => {
+      if (err) {
+        console.log("error: ", err);
+      }
+
+      res.send(books);
+    }
+  );
+});
+app.get("/sortTitle", async (req, res) => {
+  const books = [];
+  sql.query(
+    `SELECT Title, Rating FROM book WHERE UID IN (SELECT UID FROM users WHERE loggedIn = 1) ORDER BY Title ASC`,
+    (err, books) => {
+      if (err) {
+        console.log("error: ", err);
+      }
+
+      res.send(books);
+    }
+  );
+});
+app.get("/reviews/:query", async (req, res) => {
+  const books = [];
+  var title = req.params.query;
+  sql.query(
+    `SELECT Content FROM review WHERE title = "${title}"`,
+    (err, books) => {
+      if (err) {
+        console.log("error: ", err);
+      }
+
+      res.send(books);
+    }
+  );
+});
+app.get("/review/update/:query/:query2", async (req, res) => {
+  var content = req.params.query;
+  var title = req.params.query2;
+  sql.query(
+    `INSERT INTO review (Content, RevID, Rating,Title) 
+    VALUES("${content}", ${Math.random() * 100},  ${
+      Math.random() * 5
+    }, "${title}")`,
+    (err, res) => {
+      if (err) throw err;
+    }
+  );
+  //console.log("yp");
+});
+app.get("/login/:query/:query2", async (req, res) => {
+  var user = req.params.query;
+  var password = req.params.query2;
+  sql.query(
+    `UPDATE users SET loggedIn = true WHERE UFirst = "${user}" AND Password = "${password}"`,
+    (err, id) => {
+      if (err) throw err;
+
+      res.send(id);
+      // console.log(id);
+      // console.log(id[0].UID);
+    }
+  );
+});
+
+app.get("/logout/:query/:query2", async (req, res) => {
+  var user = req.params.query;
+  var password = req.params.query2;
+  sql.query(
+    `UPDATE users SET loggedIn = false WHERE UFirst = "${user}" AND Password = "${password}"`,
+    (err, id) => {
+      if (err) throw err;
+
+      res.send(id);
+      // console.log(id);
+      // console.log(id[0].UID);
     }
   );
 });
