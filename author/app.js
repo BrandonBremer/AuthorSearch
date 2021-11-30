@@ -241,3 +241,19 @@ app.get("/logout/:query/:query2", async (req, res) => {
     }
   );
 });
+app.get("/signup/:query/:query2", async (req, res) => {
+  var user = req.params.query;
+  var password = req.params.query2;
+  sql.query(
+    `INSERT INTO users (UID, UFirst, ULast, Password, loggedIn) VALUES (${
+      Math.random() * 10000
+    },"${user}","The","${password}",0)`,
+    (err, id) => {
+      if (err) throw err;
+
+      res.send(id);
+      // console.log(id);
+      // console.log(id[0].UID);
+    }
+  );
+});

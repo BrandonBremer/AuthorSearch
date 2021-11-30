@@ -38,6 +38,13 @@ function Login() {
     setUserInput("");
     setUserInput2("");
   };
+  const handleSubmit4 = (e) => {
+    fetch(`/signup/${userInput}/${userInput2}`)
+      .then((res) => res.json())
+      .then((data) => setUID(data));
+    setUserInput("");
+    setUserInput2("");
+  };
   return (
     <div className="App">
       <form>
@@ -63,12 +70,7 @@ function Login() {
         Log Out
       </Button>
       <br />
-      <Button
-        variant="contained"
-        onClick={() => {
-          setReadMore(!readMore);
-        }}
-      >
+      <Button variant="contained" onClick={handleSubmit4}>
         Make a new account
       </Button>
       );
