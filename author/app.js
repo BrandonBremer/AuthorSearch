@@ -216,13 +216,11 @@ app.get("/login/:query/:query2", async (req, res) => {
   var user = req.params.query;
   var password = req.params.query2;
   sql.query(
-    `UPDATE users SET loggedIn = true WHERE UFirst = "${user}" AND Password = "${password}"`,
+    `UPDATE users SET loggedIn = true WHERE UFirst = "${user}" AND pass = PASSWORD('${password}')`,
     (err, id) => {
       if (err) throw err;
-
       res.send(id);
-      // console.log(id);
-      // console.log(id[0].UID);
+      console.log(id);
     }
   );
 });
@@ -231,7 +229,7 @@ app.get("/logout/:query/:query2", async (req, res) => {
   var user = req.params.query;
   var password = req.params.query2;
   sql.query(
-    `UPDATE users SET loggedIn = false WHERE UFirst = "${user}" AND Password = "${password}"`,
+    `UPDATE users SET loggedIn = false WHERE UFirst = "${user}" AND pass= PASSWORD('${password}')`,
     (err, id) => {
       if (err) throw err;
 
@@ -245,9 +243,9 @@ app.get("/signup/:query/:query2", async (req, res) => {
   var user = req.params.query;
   var password = req.params.query2;
   sql.query(
-    `INSERT INTO users (UID, UFirst, ULast, Password, loggedIn) VALUES (${
+    `INSERT INTO users (UID, UFirst, ULast, loggedIn, pass) VALUES (${
       Math.random() * 10000
-    },"${user}","The","${password}",0)`,
+    },"${user}","The",0, PASSWORD('${password}'))`,
     (err, id) => {
       if (err) throw err;
 
